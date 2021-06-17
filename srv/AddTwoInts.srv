@@ -1,4 +1,2 @@
-int32 a
-int32 b
 ---
-int64 sum
+sensor_msgs/Image img

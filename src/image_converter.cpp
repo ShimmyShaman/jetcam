@@ -158,8 +158,30 @@ bool imageConverter::Convert( sensor_msgs::Image& msg, imageFormat format )
 // Convert
 bool imageConverter::Convert( sensor_msgs::Image& msg, imageFormat format, PixelType* imageGPU )
 {
-	if( !mInputCPU || !imageGPU || mWidth == 0 || mHeight == 0 || mSizeInput == 0 || mSizeOutput == 0 )
+	if(!mInputCPU) {
+		ROS_DEBUG("mInputCPU is false");
 		return false;
+	}
+	if(!imageGPU) {
+		ROS_DEBUG("imageGPU is false");
+		return false;
+	}
+	if (mWidth == 0) {
+		ROS_DEBUG("mWidth = %i", mWidth);
+		return false;
+	}
+	if (mHeight == 0) {
+		ROS_DEBUG("mHeight = %i", mHeight);
+		return false;
+	}
+	if (mSizeInput == 0) {
+		ROS_DEBUG("mSizeInput = %i", mSizeInput);
+		return false;
+	}
+	if (mSizeOutput == 0) {
+		ROS_DEBUG("mSizeOutput = %i", mSizeOutput);
+		return false;
+	}
 	
 	// perform colorspace conversion into the desired encoding
 	// in this direction, we reverse use of input/output pointers

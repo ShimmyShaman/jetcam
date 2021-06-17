@@ -8,13 +8,13 @@
 
 // Camera Stuff
 gstCamera *camera = NULL;
-imageConverter* image_cvt = NULL;
+imageConverter *image_cvt = NULL;
 videoOptions video_options;
 
 bool add(jetcam::AddTwoInts::Request &req,
          jetcam::AddTwoInts::Response &res)
 {
-  ROS_INFO("request: x=%i, y=%i", (int)req.a, (int)req.b);
+  // ROS_INFO("request: x=%i, y=%i", (int)req.a, (int)req.b);
 
   std::string resource_str = "csi://0";
   std::string codec_str = "";
@@ -55,25 +55,42 @@ bool add(jetcam::AddTwoInts::Request &req,
     return 0;
   }
 
-  imageConverter::PixelType* capture = NULL;
-  if (!camera->Capture(&capture)) {
+  imageConverter::PixelType *capture = NULL;
+  if (!camera->Capture(&capture))
+  {
     ROS_ERROR("failed to capture image");
     return false;
   }
 
+  ROS_INFO("this capture is %zu", sizeof(capture));
+
+  // Ensure correct image size
+  if (!image_cvt->Resize(camera->GetWidth(), camera->GetHeight(), imageConverter::ROSOutputFormat))
+  {
+    ROS_ERROR("failed to resize camera image converter");
+
+    camera->Close();
+    delete camera;
+    return false;
+  }
+
   sensor_msgs::Image msg;
-  //if (!image_cvt->Convert(msg, imageConverter::ROSOutputFormat, capture)) {
-  //  ROS_ERROR("failed to convert image");
-  //  return false;
-  //}
+  if (!image_cvt->Convert(msg, imageConverter::ROSOutputFormat, capture))
+  {
+    ROS_ERROR("failed to convert image");
+
+    camera->Close();
+    delete camera;
+    return false;
+  }
 
   camera->Close();
 
   delete camera;
 
   // Whatever
-  res.sum = 355252L;
-  ROS_INFO("sending back response: [%ld]", (long int)res.sum);
+  res.img = &msg;
+  ROS_INFO("sending back response: [%p]", res.img);
   return true;
 }
 
@@ -82,10 +99,9 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "add_two_ints_server");
   ros::NodeHandle n;
 
-
   // Create image converter
   image_cvt = new imageConverter();
-  
+
   ros::ServiceServer service = n.advertiseService("add_two_ints", add);
   ROS_INFO("Ready to add two ints.");
   ros::spin();
