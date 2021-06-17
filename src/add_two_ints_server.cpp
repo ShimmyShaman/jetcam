@@ -1,0 +1,97 @@
+#include "ros/ros.h"
+#include "jetcam/AddTwoInts.h"
+
+#include "ros_compat.h"
+#include "image_converter.h"
+
+#include <jetson-utils/gstCamera.h>
+
+// Camera Stuff
+gstCamera *camera = NULL;
+imageConverter* image_cvt = NULL;
+videoOptions video_options;
+
+bool add(jetcam::AddTwoInts::Request &req,
+         jetcam::AddTwoInts::Response &res)
+{
+  ROS_INFO("request: x=%i, y=%i", (int)req.a, (int)req.b);
+
+  std::string resource_str = "csi://0";
+  std::string codec_str = "";
+
+  int video_width = 1920;  //video_options.width;
+  int video_height = 1080; //video_options.height;
+  if (resource_str.size() == 0)
+  {
+    ROS_ERROR("resource param wasn't set - please set the node's resource parameter to the input device/filename/URL");
+    return 0;
+  }
+
+  ROS_INFO("opening video source: %s", resource_str.c_str());
+
+  /*
+	 * open video source
+	 */
+  camera = gstCamera::Create(video_width, video_height);
+
+  if (!camera)
+  {
+    ROS_ERROR("failed to open video source");
+    return 0;
+  }
+
+  if (!image_cvt)
+  {
+    ROS_ERROR("failed to create imageConverter");
+    return 0;
+  }
+
+  /*
+	 * start the camera streaming
+	 */
+  if (!camera->Open())
+  {
+    ROS_ERROR("failed to start streaming video source");
+    return 0;
+  }
+
+  imageConverter::PixelType* capture = NULL;
+  if (!camera->Capture(&capture)) {
+    ROS_ERROR("failed to capture image");
+    return false;
+  }
+
+  sensor_msgs::Image msg;
+  //if (!image_cvt->Convert(msg, imageConverter::ROSOutputFormat, capture)) {
+  //  ROS_ERROR("failed to convert image");
+  //  return false;
+  //}
+
+  camera->Close();
+
+  delete camera;
+
+  // Whatever
+  res.sum = 355252L;
+  ROS_INFO("sending back response: [%ld]", (long int)res.sum);
+  return true;
+}
+
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "add_two_ints_server");
+  ros::NodeHandle n;
+
+
+  // Create image converter
+  image_cvt = new imageConverter();
+  
+  ros::ServiceServer service = n.advertiseService("add_two_ints", add);
+  ROS_INFO("Ready to add two ints.");
+  ros::spin();
+
+  // Free resources
+  delete image_cvt;
+
+  return 0;
+}
