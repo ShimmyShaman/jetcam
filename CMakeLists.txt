@@ -174,6 +174,10 @@ add_executable(add_two_ints_client src/add_two_ints_client.cpp)
 target_link_libraries(add_two_ints_client ${catkin_LIBRARIES})
 add_dependencies(add_two_ints_client jetcam_gencpp)
 
+add_executable(image_publisher src/image_publisher.cpp src/image_converter.cpp src/ros_compat.cpp)
+target_link_libraries(image_publisher ${catkin_LIBRARIES} jetson-utils)
+add_dependencies(image_publisher jetcam_gencpp)
+
 #############
 ## Install ##
 #############

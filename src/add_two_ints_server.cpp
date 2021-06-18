@@ -89,8 +89,8 @@ bool add(jetcam::AddTwoInts::Request &req,
   delete camera;
 
   // Whatever
-  res.img = &msg;
-  ROS_INFO("sending back response: [%p]", res.img);
+  // res.img = &msg;
+  // ROS_INFO("sending back response: [%p]", res.img);
   return true;
 }
 
@@ -101,7 +101,9 @@ int main(int argc, char **argv)
 
   // Create image converter
   image_cvt = new imageConverter();
-
+  
+  // image_transport::ImageTransport it(nh);
+  // image_transport::Subscriber sub = it.subscribe("/cameras/head")
   ros::ServiceServer service = n.advertiseService("add_two_ints", add);
   ROS_INFO("Ready to add two ints.");
   ros::spin();
